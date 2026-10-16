@@ -69,9 +69,15 @@
     <div class="col-12 md:col-12">
       <p-card styleClass="shadow-1 border-left-3 border-purple-500">
         <div class="text-500 font-medium mb-2">Avance General</div>
-        <div class="text-purple-700 font-bold text-2xl mb-2">{{ datosAvance().resumenGeneral.porcentajeAvance }}%</div>
-        <p-progressbar [value]="datosAvance().resumenGeneral.porcentajeAvance" [showValue]="false"
-          styleClass="h-1rem"></p-progressbar>
+        <div 
+          [class]="'text-'+getColor(datosAvance().resumenGeneral.porcentajeAvance, 'text')+'-400 font-bold text-2xl mb-2'"
+        >
+          {{ datosAvance().resumenGeneral.porcentajeAvance }}%</div>
+        <p-progressbar 
+          [value]="datosAvance().resumenGeneral.porcentajeAvance" 
+          [color]="getColor(datosAvance().resumenGeneral.porcentajeAvance, 'color')"
+          [showValue]="false"
+        ></p-progressbar>
       </p-card>
     </div>
   </div>
@@ -109,7 +115,7 @@
     <!-- Tabla con PrimeNG -->
     <div class="col-12 lg:col-12 mb-2">
       <p-card header="Detalle por Distrito" styleClass="shadow-1 h-full">
-        <p-table dataKey="distritoId" [value]="datosAvance().detalleDistritos" [loading]="cargando" responsiveLayout="scroll"
+        <p-table dataKey="distritoId" [value]="datosAvance()?.detalleDistritos || []" [loading]="cargando()" responsiveLayout="scroll"
           styleClass="p-datatable-sm p-datatable-striped" [rowHover]="true" [rows]="10">
 
           <ng-template #header>
@@ -138,7 +144,7 @@
 
           <ng-template #emptymessage>
             <tr>
-              <td colspan="5" class="text-center p-4">No se encontraron registros para los filtros seleccionados.</td>
+              <td colspan="5" class="text-center p-4">No hay resultados.</td>
             </tr>
           </ng-template>
 

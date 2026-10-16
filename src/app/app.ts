@@ -15,7 +15,7 @@ import autoTable from 'jspdf-autotable';
 import { AvanceService } from './services/avance';
 import { AvanceResponse, ItemSelector } from './models/avance.interface';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { timer, switchMap } from 'rxjs';
+import { timer, switchMap, finalize } from 'rxjs';
 import * as XLSX from 'xlsx';
 
 @Component({
@@ -52,7 +52,7 @@ export class App {
     { capturada: '#7c3aed', pendiente: 'rgba(124, 58, 237, 0.3)' }, // Violeta (Fuerte / Tenue)
     { capturada: '#059669', pendiente: 'rgba(5, 150, 105, 0.3)' },  // Verde (Fuerte / Tenue)
   ];
-  cargando = true;
+  cargando = signal(false);
 
   // Configuración de la gráfica de barras
   chartData = computed(() => {
@@ -80,43 +80,43 @@ export class App {
   });
 
   // Computed Signal que genera la data para las gráficas de pastel individuales
-chartListTipoEleccion = computed(() => {
-  const detalle = this.datosAvance().detalleTiposEleccion || [];
+  chartListTipoEleccion = computed(() => {
+    const detalle = this.datosAvance().detalleTiposEleccion || [];
 
-  return detalle.map((t, index) => {
-    // Asignar color según el índice o tipo de elección
-    const colors = this.COLOR_PALETTE[index % this.COLOR_PALETTE.length];
+    return detalle.map((t, index) => {
+      // Asignar color según el índice o tipo de elección
+      const colors = this.COLOR_PALETTE[index % this.COLOR_PALETTE.length];
 
-    return {
-      titulo: t.tipoEleccion,
-      porcentaje: t.porcentajeAvance,
-      data: {
-        labels: ['Capturadas', 'Pendientes'],
-        datasets: [
-          {
-            data: [t.capturadas, t.pendientes],
-            backgroundColor: [colors.capturada, colors.pendiente],
-            borderColor: [colors.capturada, colors.capturada],
-            borderWidth: 1
-          }
-        ]
-      },
-      chartPieOptions: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: {
-              boxWidth: 12,
-              font: { size: 11 }
+      return {
+        titulo: t.tipoEleccion,
+        porcentaje: t.porcentajeAvance,
+        data: {
+          labels: ['Capturadas', 'Pendientes'],
+          datasets: [
+            {
+              data: [t.capturadas, t.pendientes],
+              backgroundColor: [colors.capturada, colors.pendiente],
+              borderColor: [colors.capturada, colors.capturada],
+              borderWidth: 1
+            }
+          ]
+        },
+        chartPieOptions: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                boxWidth: 12,
+                font: { size: 11 }
+              }
             }
           }
         }
-      }
-    };
+      };
+    });
   });
-});
   
   chartOptions = {
       responsive: true,
@@ -158,10 +158,13 @@ chartListTipoEleccion = computed(() => {
     timer(0, 30000)
       .pipe(
         switchMap(() => {
-          this.cargando = true;
+          this.cargando.set(true);
           return this.avanceService.obtenerAvance(
             this.selectedDistrito ?? undefined, 
             this.selectedTipoEleccion ?? undefined
+          ).pipe(
+            // 💡 El finalize va aquí, interno para cada petición del switchMap
+            finalize(() => this.cargando.set(false))
           );
         }),
         takeUntilDestroyed(this.destroyRef) // Detiene el timer si el usuario navega a otra pantalla
@@ -169,27 +172,27 @@ chartListTipoEleccion = computed(() => {
       .subscribe({
         next: (response) => {
           this.datosAvance.set(response);
-          this.cargando = false;
         },
         error: (err) => {
           console.error('Error al actualizar datos automáticamente:', err);
-          this.cargando = false;
         }
       });
   }
 
   consultarAvance() {
-    this.cargando = true;
+    this.cargando.set(true);
     this.avanceService
       .obtenerAvance(this.selectedDistrito ?? undefined, this.selectedTipoEleccion ?? undefined)
+      .pipe(
+        // 💡 El finalize va aquí, interno para cada petición del switchMap
+        finalize(() => this.cargando.set(false))
+      )
       .subscribe({
         next: (response) => {
           this.datosAvance.set(response);
-          this.cargando = false;
         },
         error: (err) => {
           console.error('Error al cargar datos:', err);
-          this.cargando = false;
         }
       });
   }
@@ -300,5 +303,25 @@ chartListTipoEleccion = computed(() => {
     // 4. Descargar el archivo Excel .xlsx
     const nombreArchivo = `Reporte_Avance_Actas_${new Date().getTime()}.xlsx`;
     XLSX.writeFile(workbook, nombreArchivo);
+  }
+
+  getColor(value:number, type: string){
+    if(type==='color'){
+      if(value<50){
+        return "red"
+      } else if(value >= 50 && value < 80){
+        return "yellow"
+      } else {
+        return "green"
+      }
+    } else {
+      if(value<50){
+        return "red"
+      } else if(value >= 50 && value < 80){
+        return "yellow"
+      } else {
+        return "green"
+      }
+    }
   }
 }
