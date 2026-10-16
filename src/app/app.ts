@@ -16,6 +16,7 @@ import { AvanceService } from './services/avance';
 import { AvanceResponse, ItemSelector } from './models/avance.interface';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { timer, switchMap } from 'rxjs';
+import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-root',
@@ -199,7 +200,7 @@ chartListTipoEleccion = computed(() => {
     this.consultarAvance();
   }
 
-    exportarPDF() {
+  exportarPDF() {
     const doc = new jsPDF();
 
     // Título del reporte
@@ -249,5 +250,55 @@ chartListTipoEleccion = computed(() => {
 
     // Guardar y descargar el archivo PDF
     doc.save(`Reporte_Avance_Actas_${new Date().getTime()}.pdf`);
+  }
+
+  exportarExcel() {
+    const datos = this.datosAvance();
+    const resumen = datos.resumenGeneral;
+
+    // 1. Encabezado del reporte
+    const filasExcel: any[] = [
+      ['MONITOR DE CAPTURA DE ACTAS - REPORTE DE AVANCE'],
+      [`Fecha de generación: ${new Date().toLocaleString()}`],
+      [], // Fila en blanco
+      ['RESUMEN GENERAL'],
+      ['Actas Esperadas', resumen.actasEsperadas],
+      ['Actas Capturadas', resumen.capturadas],
+      ['Actas Pendientes', resumen.pendientes],
+      ['% Avance General', `${resumen.porcentajeAvance}%`],
+      [], // Fila en blanco
+      ['DETALLE POR DISTRITO'],
+      ['Distrito', 'Esperadas', 'Capturadas', 'Pendientes', '% Avance']
+    ];
+
+    // 2. Agregar los datos de la tabla filtrada (Signal)
+    datos.detalleDistritos.forEach((item) => {
+      filasExcel.push([
+        item.distrito,
+        item.esperadas,
+        item.capturadas,
+        item.pendientes,
+        `${item.porcentajeAvance}%`
+      ]);
+    });
+
+    // 3. Crear el libro de trabajo (Workbook) y la hoja (Worksheet)
+    const worksheet: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(filasExcel);
+
+    // Ajustar ancho automático de columnas para mejor visualización
+    worksheet['!cols'] = [
+      { wch: 25 }, // Distrito / Conceptos
+      { wch: 15 }, // Esperadas
+      { wch: 15 }, // Capturadas
+      { wch: 15 }, // Pendientes
+      { wch: 15 }  // % Avance
+    ];
+
+    const workbook: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Avance_Captura');
+
+    // 4. Descargar el archivo Excel .xlsx
+    const nombreArchivo = `Reporte_Avance_Actas_${new Date().getTime()}.xlsx`;
+    XLSX.writeFile(workbook, nombreArchivo);
   }
 }
