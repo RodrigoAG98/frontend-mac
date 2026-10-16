@@ -12,16 +12,16 @@
     <div class="grid formgrid p-fluid align-items-end">
       <div class="col-12 md:col-3 mb-3 md:mb-0">
         <label class="font-bold text-700 mb-2 block">Distrito</label>
-        <p-select [options]="distritos" [multiple]="true" [(ngModel)]="selectedDistrito" optionLabel="Nombre" optionValue="DistritoId"
-          placeholder="Todos los distritos" [showClear]="true" (onChange)="consultarAvance()">
-        </p-select>
+        <p-multiselect [options]="distritos" [(ngModel)]="selectedDistrito" optionLabel="Nombre" optionValue="DistritoId"
+          placeholder="Todos los distritos" [showClear]="true" (onChange)="consultarAvance()" display="chip" fluid>
+        </p-multiselect>
       </div>
 
       <div class="col-12 md:col-3 mb-3 md:mb-0">
         <label class="font-bold text-700 mb-2 block">Tipo de Elección</label>
-        <p-select [options]="tiposEleccion" [multiple]="true" [(ngModel)]="selectedTipoEleccion" optionLabel="Nombre"
-          optionValue="TipoEleccionId" placeholder="Todos los tipos" [showClear]="true" (onChange)="consultarAvance()">
-        </p-select>
+        <p-multiselect [options]="tiposEleccion" [(ngModel)]="selectedTipoEleccion" optionLabel="Nombre"
+          optionValue="TipoEleccionId" placeholder="Todos los tipos" [showClear]="true" (onChange)="consultarAvance()" display="chip" fluid>
+        </p-multiselect>
       </div>
 
       <div class="col-12 md:col-2 flex gap-2">

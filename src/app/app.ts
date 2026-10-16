@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { CardModule } from 'primeng/card';
-import { SelectModule } from 'primeng/select';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { TableModule } from 'primeng/table';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { ButtonModule } from 'primeng/button';
@@ -29,7 +29,7 @@ import * as XLSX from 'xlsx';
     ButtonModule,
     ChartModule,
     TagModule,
-    SelectModule
+    MultiSelectModule
   ],
   templateUrl: './app.html'
 })
@@ -59,21 +59,16 @@ export class App {
     const detalle = this.datosAvance().detalleDistritos;
     
     const labels = detalle.map(d => d.distrito);
-    const capturadas = detalle.map(d => d.capturadas);
-    const pendientes = detalle.map(d => d.pendientes);
+    const capturadas = detalle.map(d => d.porcentajeAvance);
+    const colores = detalle.map(d => this.getColor(d.porcentajeAvance,'hexa'));
 
     return {
       labels: labels,
       datasets: [
         {
           label: 'Capturadas',
-          backgroundColor: '#22c55e',
+          backgroundColor: colores,
           data: capturadas
-        },
-        {
-          label: 'Pendientes',
-          backgroundColor: '#f97316',
-          data: pendientes
         }
       ]
     };
@@ -136,6 +131,8 @@ export class App {
         },
         y: {
           stacked: true,
+          min: 0,
+          max: 100,
           ticks: { color: '#495057' },
           grid: { color: '#ebedef' }
         }
@@ -314,7 +311,7 @@ export class App {
       } else {
         return "green"
       }
-    } else {
+    } else if(type==='text') {
       if(value<50){
         return "red"
       } else if(value >= 50 && value < 80){
@@ -322,6 +319,24 @@ export class App {
       } else {
         return "green"
       }
+    } else {
+      if(value<50){
+        return "#F54927"
+      } else if(value >= 50 && value < 80){
+        return "#F5E027"
+      } else {
+        return "#02BD00"
+      }
     }
+  }
+
+  getLabel(): string {
+    if (!['object','array'].includes(typeof(this.selectedDistrito))) return '';
+     console.log(typeof(this.selectedDistrito),this.selectedDistrito);
+    return '';
+    //const distritosArray = Array.from(this.selectedDistrito || []);
+    //const first = this.distritos.findIndex((d) => d.DistritoId === this.selectedDistrito[0]);
+        
+    //return first >= 0 ? `${this.distritos[first].Nombre} (+${this.selectedDistrito.length - 1} more)` : this.distritos[first].Nombre;
   }
 }
