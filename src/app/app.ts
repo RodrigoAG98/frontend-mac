@@ -9,6 +9,8 @@ import { ProgressBarModule } from 'primeng/progressbar';
 import { ButtonModule } from 'primeng/button';
 import { ChartModule } from 'primeng/chart';
 import { TagModule } from 'primeng/tag';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 import { AvanceService } from './services/avance';
 import { AvanceResponse, ItemSelector } from './models/avance.interface';
@@ -195,5 +197,57 @@ chartListTipoEleccion = computed(() => {
     this.selectedDistrito = null;
     this.selectedTipoEleccion = null;
     this.consultarAvance();
+  }
+
+    exportarPDF() {
+    const doc = new jsPDF();
+
+    // Título del reporte
+    doc.setFontSize(16);
+    doc.text('Monitor de Captura de Actas - Detalle por Distrito', 14, 15);
+
+    // Fecha y hora de generación
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Fecha de reporte: ${new Date().toLocaleString()}`, 14, 22);
+
+    // Resumen General
+    const resumen = this.datosAvance().resumenGeneral;
+    doc.text(
+      `Esperadas: ${resumen.actasEsperadas} | Capturadas: ${resumen.capturadas} | Pendientes: ${resumen.pendientes} | Avance General: ${resumen.porcentajeAvance}%`,
+      14,
+      28
+    );
+
+    // Mapear los datos de la tabla (Signal) para autoTable
+    const dataTabla = this.datosAvance().detalleDistritos.map((item) => [
+      item.distrito,
+      item.esperadas,
+      item.capturadas,
+      item.pendientes,
+      `${item.porcentajeAvance}%`
+    ]);
+
+    // Generar la tabla estilizada
+    autoTable(doc, {
+      startY: 34,
+      head: [['Distrito', 'Esperadas', 'Capturadas', 'Pendientes', '% Avance']],
+      body: dataTabla,
+      theme: 'striped',
+      headStyles: {
+        fillColor: [37, 99, 235], // Azul
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      columnStyles: {
+        1: { halign: 'right' },
+        2: { halign: 'right' },
+        3: { halign: 'right' },
+        4: { halign: 'right' }
+      }
+    });
+
+    // Guardar y descargar el archivo PDF
+    doc.save(`Reporte_Avance_Actas_${new Date().getTime()}.pdf`);
   }
 }
