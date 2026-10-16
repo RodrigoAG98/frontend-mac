@@ -40,8 +40,15 @@ export class App {
 
   datosAvance = signal<AvanceResponse>({
     resumenGeneral: { actasEsperadas: 0, capturadas: 0, pendientes: 0, porcentajeAvance: 0 },
-    detalleDistritos: []
+    detalleDistritos: [],
+    detalleTiposEleccion: []
   });
+
+  COLOR_PALETTE = [
+    { capturada: '#2563eb', pendiente: 'rgba(37, 99, 235, 0.3)' },  // Azul (Fuerte / Tenue)
+    { capturada: '#7c3aed', pendiente: 'rgba(124, 58, 237, 0.3)' }, // Violeta (Fuerte / Tenue)
+    { capturada: '#059669', pendiente: 'rgba(5, 150, 105, 0.3)' },  // Verde (Fuerte / Tenue)
+  ];
   cargando = true;
 
   // Configuración de la gráfica de barras
@@ -68,6 +75,45 @@ export class App {
       ]
     };
   });
+
+  // Computed Signal que genera la data para las gráficas de pastel individuales
+chartListTipoEleccion = computed(() => {
+  const detalle = this.datosAvance().detalleTiposEleccion || [];
+
+  return detalle.map((t, index) => {
+    // Asignar color según el índice o tipo de elección
+    const colors = this.COLOR_PALETTE[index % this.COLOR_PALETTE.length];
+
+    return {
+      titulo: t.tipoEleccion,
+      porcentaje: t.porcentajeAvance,
+      data: {
+        labels: ['Capturadas', 'Pendientes'],
+        datasets: [
+          {
+            data: [t.capturadas, t.pendientes],
+            backgroundColor: [colors.capturada, colors.pendiente],
+            borderColor: [colors.capturada, colors.capturada],
+            borderWidth: 1
+          }
+        ]
+      },
+      chartPieOptions: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              boxWidth: 12,
+              font: { size: 11 }
+            }
+          }
+        }
+      }
+    };
+  });
+});
   
   chartOptions = {
       responsive: true,
